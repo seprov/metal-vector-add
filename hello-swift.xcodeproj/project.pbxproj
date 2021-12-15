@@ -8,6 +8,9 @@
 
 /* Begin PBXBuildFile section */
 		9E6D36C2276A783F00112643 /* main.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9E6D36C1276A783F00112643 /* main.swift */; };
+		9E6D36C9276A7C3500112643 /* add-arrays.metal in Sources */ = {isa = PBXBuildFile; fileRef = 9E6D36C8276A7C3500112643 /* add-arrays.metal */; };
+		9E6D36CB276A8C6600112643 /* generate-random-array.metal in Sources */ = {isa = PBXBuildFile; fileRef = 9E6D36CA276A8C6600112643 /* generate-random-array.metal */; };
+		9EB9DFD2276AA4C400C8CF1F /* SceneKit.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 9EB9DFD1276AA4C400C8CF1F /* SceneKit.framework */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXCopyFilesBuildPhase section */
@@ -25,6 +28,9 @@
 /* Begin PBXFileReference section */
 		9E6D36BE276A783F00112643 /* hello-swift */ = {isa = PBXFileReference; explicitFileType = "compiled.mach-o.executable"; includeInIndex = 0; path = "hello-swift"; sourceTree = BUILT_PRODUCTS_DIR; };
 		9E6D36C1276A783F00112643 /* main.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = main.swift; sourceTree = "<group>"; };
+		9E6D36C8276A7C3500112643 /* add-arrays.metal */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.metal; path = "add-arrays.metal"; sourceTree = "<group>"; };
+		9E6D36CA276A8C6600112643 /* generate-random-array.metal */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.metal; path = "generate-random-array.metal"; sourceTree = "<group>"; };
+		9EB9DFD1276AA4C400C8CF1F /* SceneKit.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = SceneKit.framework; path = System/Library/Frameworks/SceneKit.framework; sourceTree = SDKROOT; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -32,6 +38,7 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				9EB9DFD2276AA4C400C8CF1F /* SceneKit.framework in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -43,6 +50,7 @@
 			children = (
 				9E6D36C0276A783F00112643 /* hello-swift */,
 				9E6D36BF276A783F00112643 /* Products */,
+				9EB9DFD0276AA4C400C8CF1F /* Frameworks */,
 			);
 			sourceTree = "<group>";
 		};
@@ -57,9 +65,19 @@
 		9E6D36C0276A783F00112643 /* hello-swift */ = {
 			isa = PBXGroup;
 			children = (
+				9E6D36C8276A7C3500112643 /* add-arrays.metal */,
+				9E6D36CA276A8C6600112643 /* generate-random-array.metal */,
 				9E6D36C1276A783F00112643 /* main.swift */,
 			);
 			path = "hello-swift";
+			sourceTree = "<group>";
+		};
+		9EB9DFD0276AA4C400C8CF1F /* Frameworks */ = {
+			isa = PBXGroup;
+			children = (
+				9EB9DFD1276AA4C400C8CF1F /* SceneKit.framework */,
+			);
+			name = Frameworks;
 			sourceTree = "<group>";
 		};
 /* End PBXGroup section */
@@ -121,6 +139,8 @@
 			buildActionMask = 2147483647;
 			files = (
 				9E6D36C2276A783F00112643 /* main.swift in Sources */,
+				9E6D36C9276A7C3500112643 /* add-arrays.metal in Sources */,
+				9E6D36CB276A8C6600112643 /* generate-random-array.metal in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};

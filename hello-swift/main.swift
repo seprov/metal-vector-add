@@ -11,7 +11,7 @@ import MetalKit
 /* start main */
 //let totalStart = CFAbsoluteTimeGetCurrent()
 
-let count: Int = 1000000
+let count: Int = 100000000
 let device = MTLCreateSystemDefaultDevice()
 print()
 
@@ -152,19 +152,16 @@ func getRandomArray()->[Float] {
     var result = [Float].init(repeating: 0.0, count: count)
     for i in 0..<count {
         //result[i] = Float(arc4random_uniform(1000000000))/100000000
-        result[i] = Float(10 * (seed2 + i) / (i+1));
-        
+        result[i] = (Float((seed2 + i) / (i+1))).truncatingRemainder(dividingBy: 100);
+        //result[i] = Float(10)
     }
     
     return result
 }
 
 func getRandomArrayFromGPU()->[Float] {
-    var printCount = 0
-    /////////////////
-    print("printCount " + String(format: "0", printCount) + "\(String(format: "%.05f", CFAbsoluteTimeGetCurrent()))")
-    printCount += 1
-    //////////////////
+
+
     print("using gpu for random")
     
     //var x = UnsafeMutableRawPointer(&result)
@@ -177,7 +174,7 @@ func getRandomArrayFromGPU()->[Float] {
     let alignment = 0x1000
     let allocationSize = (length + alignment - 1) & (~(alignment - 1))
     posix_memalign(&memory, alignment, allocationSize)
-    var sharedMetalBuffer = device?.makeBuffer(bytesNoCopy: memory!,
+    let sharedMetalBuffer = device?.makeBuffer(bytesNoCopy: memory!,
                      length: allocationSize,
                      options: [],
                      deallocator: { (pointer: UnsafeMutableRawPointer, _: Int) in
@@ -185,33 +182,31 @@ func getRandomArrayFromGPU()->[Float] {
     })
     
     
-    let capture_manager = MTLCaptureManager.shared()
-    let capture_desc = MTLCaptureDescriptor()
-    capture_desc.captureObject = device
-    do {
-        try capture_manager.startCapture(with: capture_desc)
-    } catch {
-        print(error)
-    }
-    let argument_desc = MTLArgumentDescriptor()
-    argument_desc.dataType = MTLDataType.pointer
-    argument_desc.index = 0
-    argument_desc.arrayLength = 1024
-    let argument_encoder = device?.makeArgumentEncoder(arguments: [argument_desc])!
+    //let capture_manager = MTLCaptureManager.shared()
+    //let capture_desc = MTLCaptureDescriptor()
+    //capture_desc.captureObject = device
+    //do {
+    //    try capture_manager.startCapture(with: capture_desc)
+    //} catch {
+    //    print(error)
+    //}
+    //let argument_desc = MTLArgumentDescriptor()
+    //argument_desc.dataType = MTLDataType.pointer
+    //argument_desc.index = 0
+    //argument_desc.arrayLength = 1024
+    //let argument_encoder = device?.makeArgumentEncoder(arguments: [argument_desc])!
    
-    let argument_buffer = device?.makeBuffer(length: argument_encoder!.encodedLength, options: MTLResourceOptions())
-    argument_encoder!.setArgumentBuffer(argument_buffer, offset: 0)
+    //let argument_buffer = device?.makeBuffer(length: argument_encoder!.encodedLength, options: MTLResourceOptions())
+    //argument_encoder!.setArgumentBuffer(argument_buffer, offset: 0)
+        /*
     var random2 = Int(arc4random())
     let rp2 = UnsafeRawPointer.init(&random2)
     let buffer = device.makeBuffer(bytes: ptr, length: 4, options: MTLResourceOptions.storageModeShared)!
         argument_encoder.setBuffer(buffer, offset: 0, index: 0)
         
         let source = try String(contentsOf: URL.init(fileURLWithPath: "/path/to/kernel.metal"))
-        let library = try device.makeLibrary(source: source, options: MTLCompileOptions())
-    /////////////////
-    print("printCount " + String(format: "0", printCount) + "\(String(format: "%.05f", CFAbsoluteTimeGetCurrent()))")
-    printCount += 1
-    //////////////////
+        let library = try device.makeLibrary(source: source, options: MTLCompileOptions())*/
+
     sharedMetalBuffer?.contents().bindMemory(to: [Float].self, capacity: length)
 
     //let sharedMetalBuffer = device?.makeBuffer(bytes: &result, length: count * MemoryLayout<Float>.stride, options: .storageModeShared)
@@ -244,7 +239,7 @@ func getRandomArrayFromGPU()->[Float] {
     
     // we still need one random number
     var random = Int(arc4random())
-    var rp: UnsafeMutablePointer<Int> = .init(&random)
+    let rp: UnsafeMutablePointer<Int> = .init(&random)
     commandEncoder?.setBuffer(device?.makeBuffer(bytes: rp, length: 4, options: .storageModeShared),offset: 0,index: 1)
     
     let threadsPerGrid = MTLSize(width: count, height: 1, depth: 1)
@@ -255,24 +250,21 @@ func getRandomArrayFromGPU()->[Float] {
     
     commandEncoder?.endEncoding()
     
-    /////////////////
-    print("printCount " + String(format: "0", printCount) + "\(String(format: "%.05f", CFAbsoluteTimeGetCurrent()))")
-    printCount += 1
-    //////////////////
+
     
     
     commandBuf?.commit()
     commandBuf?.waitUntilCompleted()
     
-    var resultBufferPointer = sharedMetalBuffer?.contents().bindMemory(to: Float.self, capacity: MemoryLayout<Float>.size * count)
+   // var resultBufferPointer = sharedMetalBuffer?.contents().bindMemory(to: Float.self, capacity: MemoryLayout<Float>.size * count)
     
     //print(Float(resultBufferPointer!.pointee))
     
-    print(sharedMetalBuffer?.length)
+   // print(sharedMetalBuffer?.length)
    
-    print(resultBufferPointer)
-    print(resultBufferPointer?.advanced(by: 1))
-    print("        " , result.count * MemoryLayout<Float>.stride)
+   // print(resultBufferPointer)
+   // print(resultBufferPointer?.advanced(by: 1))
+    //print("        " , result.count * MemoryLayout<Float>.stride)
     
     //var result  = [Float].init(repeating: 0.0, count: count)
     
@@ -288,15 +280,12 @@ func getRandomArrayFromGPU()->[Float] {
     //var bigResult = Array<Float>(unsafeUninitializedCapacity: allocationSize, initializingWith: (result, 10) throws -> Void)
     
     //var bigResult = [Float].init(repeating: 0.0, count: sharedMetalBuffer?.length ?? 0)
-    memmove(&result[0], sharedMetalBuffer?.contents(), allocationSize)
+    memmove(&result[0], sharedMetalBuffer?.contents(), length)
             //(sharedMetalBuffer?.length)!)
     //memmove(&result[0], &memory!, allocationSize)
     //print(result)
     
-    /////////////////
-    print("printCount " + String(format: "0", printCount) + "\(String(format: "%.05f", CFAbsoluteTimeGetCurrent()))")
-    printCount += 1
-    //////////////////
+
     
     /*
     //this part is incredibly slow
@@ -310,10 +299,7 @@ func getRandomArrayFromGPU()->[Float] {
     //result
     
     
-    /////////////////
-    print("printCount " + String(printCount) + " \(String(format: "%.05f", CFAbsoluteTimeGetCurrent()))")
-    printCount += 1
-    //////////////////
+
     
     // print(type(of: resultBufferPointer))
     

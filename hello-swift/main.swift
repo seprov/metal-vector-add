@@ -11,12 +11,23 @@ import MetalKit
 /* start main */
 //let totalStart = CFAbsoluteTimeGetCurrent()
 
-let count: Int = 10000000
+let count: Int = 1000000
+let device = MTLCreateSystemDefaultDevice()
+print()
 
 // Generate on CPU and add on GPU
 let startCPUTime = CFAbsoluteTimeGetCurrent()
+
+let getCPURandomStart1 = CFAbsoluteTimeGetCurrent()
 var array3 = getRandomArray()
+let getCPURandomElapsed1 = CFAbsoluteTimeGetCurrent() - getCPURandomStart1
+print("time elapsed: \(String(format: "%.05f", getCPURandomElapsed1)) seconds")
+
+let getCPURandomStart2 = CFAbsoluteTimeGetCurrent()
 var array4 = getRandomArray()
+let getCPURandomElapsed2 = CFAbsoluteTimeGetCurrent() - getCPURandomStart2
+print("time elapsed: \(String(format: "%.05f", getCPURandomElapsed2)) seconds")
+
 computeWay(arr1 : array3, arr2 : array4)
 let totalCPUElapsed = CFAbsoluteTimeGetCurrent() - startCPUTime
 print("total time elapsed \(String(format: "%.05f", totalCPUElapsed)) seconds")
@@ -25,8 +36,17 @@ print()
 
 // Generate on GPU and add on GPU
 let startGPUTime = CFAbsoluteTimeGetCurrent()
+
+let getGPURandomStart1 = CFAbsoluteTimeGetCurrent()
 var array1 = getRandomArrayFromGPU()
+let getGPURandomElapsed1 = CFAbsoluteTimeGetCurrent() - getGPURandomStart1
+print("time elapsed: \(String(format: "%.05f", getGPURandomElapsed1)) seconds")
+
+let getGPURandomStart2 = CFAbsoluteTimeGetCurrent()
 var array2 = getRandomArrayFromGPU()
+let getGPURandomElapsed2 = CFAbsoluteTimeGetCurrent() - getGPURandomStart2
+print("time elapsed: \(String(format: "%.05f", getGPURandomElapsed2)) seconds")
+
 computeWay(arr1: array1, arr2: array2)
 let totalGPUElapsed = CFAbsoluteTimeGetCurrent() - startGPUTime
 print("total time elapsed \(String(format: "%.05f", totalGPUElapsed)) seconds")
@@ -47,7 +67,8 @@ print()
 
 func computeWay(arr1 : [Float], arr2 : [Float]) {
     
-    let device = MTLCreateSystemDefaultDevice()
+    
+    
     let commandQueue = device?.makeCommandQueue()
     let GPUFunctionLibrary = device?.makeDefaultLibrary()
     let additionGPUFunction = GPUFunctionLibrary?.makeFunction(name: "add_arrays")
@@ -127,37 +148,72 @@ func basicForLoopWay(arr1 : [Float], arr2 : [Float]) {
 // done
 func getRandomArray()->[Float] {
     print("using cpu for random")
-    let getCPURandomStart = CFAbsoluteTimeGetCurrent()
+    let seed2 = Int(arc4random())
     var result = [Float].init(repeating: 0.0, count: count)
     for i in 0..<count {
-        result[i] = Float(arc4random_uniform(1000000000))/100000000
-        
+        //result[i] = Float(arc4random_uniform(1000000000))/100000000
+        result[i] = Float(10 * (seed2 + i) / (i+1));
         
     }
-    let getCPURandomElapsed = CFAbsoluteTimeGetCurrent() - getCPURandomStart
-    print("time elapsed: \(String(format: "%.05f", getCPURandomElapsed)) seconds")
+    
     return result
 }
 
 func getRandomArrayFromGPU()->[Float] {
+    var printCount = 0
+    /////////////////
+    print("printCount " + String(format: "0", printCount) + "\(String(format: "%.05f", CFAbsoluteTimeGetCurrent()))")
+    printCount += 1
+    //////////////////
     print("using gpu for random")
-    let getGPURandomStart = CFAbsoluteTimeGetCurrent()
+    
     //var x = UnsafeMutableRawPointer(&result)
     
-    let device = MTLCreateSystemDefaultDevice()
+    //let device = MTLCreateSystemDefaultDevice()
     
+    var result  = [Float].init(repeating: 0.0, count: count)
     let length = count * MemoryLayout<Float>.stride
     var memory: UnsafeMutableRawPointer? = nil
     let alignment = 0x1000
     let allocationSize = (length + alignment - 1) & (~(alignment - 1))
     posix_memalign(&memory, alignment, allocationSize)
-    let sharedMetalBuffer = device?.makeBuffer(bytesNoCopy: memory!,
+    var sharedMetalBuffer = device?.makeBuffer(bytesNoCopy: memory!,
                      length: allocationSize,
                      options: [],
                      deallocator: { (pointer: UnsafeMutableRawPointer, _: Int) in
                         free(pointer)
     })
+    
+    
+    let capture_manager = MTLCaptureManager.shared()
+    let capture_desc = MTLCaptureDescriptor()
+    capture_desc.captureObject = device
+    do {
+        try capture_manager.startCapture(with: capture_desc)
+    } catch {
+        print(error)
+    }
+    let argument_desc = MTLArgumentDescriptor()
+    argument_desc.dataType = MTLDataType.pointer
+    argument_desc.index = 0
+    argument_desc.arrayLength = 1024
+    let argument_encoder = device?.makeArgumentEncoder(arguments: [argument_desc])!
+   
+    let argument_buffer = device?.makeBuffer(length: argument_encoder!.encodedLength, options: MTLResourceOptions())
+    argument_encoder!.setArgumentBuffer(argument_buffer, offset: 0)
+    var random2 = Int(arc4random())
+    let rp2 = UnsafeRawPointer.init(&random2)
+    let buffer = device.makeBuffer(bytes: ptr, length: 4, options: MTLResourceOptions.storageModeShared)!
+        argument_encoder.setBuffer(buffer, offset: 0, index: 0)
+        
+        let source = try String(contentsOf: URL.init(fileURLWithPath: "/path/to/kernel.metal"))
+        let library = try device.makeLibrary(source: source, options: MTLCompileOptions())
+    /////////////////
+    print("printCount " + String(format: "0", printCount) + "\(String(format: "%.05f", CFAbsoluteTimeGetCurrent()))")
+    printCount += 1
+    //////////////////
     sharedMetalBuffer?.contents().bindMemory(to: [Float].self, capacity: length)
+
     //let sharedMetalBuffer = device?.makeBuffer(bytes: &result, length: count * MemoryLayout<Float>.stride, options: .storageModeShared)
     //sharedMetalBuffer?.contents().initializeMemory(as: Float.self, from: result, count: count)
     
@@ -199,20 +255,69 @@ func getRandomArrayFromGPU()->[Float] {
     
     commandEncoder?.endEncoding()
     
+    /////////////////
+    print("printCount " + String(format: "0", printCount) + "\(String(format: "%.05f", CFAbsoluteTimeGetCurrent()))")
+    printCount += 1
+    //////////////////
+    
+    
     commandBuf?.commit()
     commandBuf?.waitUntilCompleted()
     
     var resultBufferPointer = sharedMetalBuffer?.contents().bindMemory(to: Float.self, capacity: MemoryLayout<Float>.size * count)
     
-    var result  = [Float].init(repeating: 0.0, count: count)
+    //print(Float(resultBufferPointer!.pointee))
+    
+    print(sharedMetalBuffer?.length)
+   
+    print(resultBufferPointer)
+    print(resultBufferPointer?.advanced(by: 1))
+    print("        " , result.count * MemoryLayout<Float>.stride)
+    
+    //var result  = [Float].init(repeating: 0.0, count: count)
+    
+    //resultBufferPointer .storeBytes(of: result, toByteOffset: 0, as: Float)
+    //print(result[0])
+    //result = resultBufferPointer?.move()
+    
+    //let value = result.withUnsafeBytes {$0.baseAddress?.assumingMemoryBound(to: Float.self)}
+    //let x = UnsafeBufferPointer(start: sharedMetalBuffer?.contents(), count: 100)
+    
+    //print(x[0])
+    //print(result[0])
+    //var bigResult = Array<Float>(unsafeUninitializedCapacity: allocationSize, initializingWith: (result, 10) throws -> Void)
+    
+    //var bigResult = [Float].init(repeating: 0.0, count: sharedMetalBuffer?.length ?? 0)
+    memmove(&result[0], sharedMetalBuffer?.contents(), allocationSize)
+            //(sharedMetalBuffer?.length)!)
+    //memmove(&result[0], &memory!, allocationSize)
+    //print(result)
+    
+    /////////////////
+    print("printCount " + String(format: "0", printCount) + "\(String(format: "%.05f", CFAbsoluteTimeGetCurrent()))")
+    printCount += 1
+    //////////////////
+    
+    /*
+    //this part is incredibly slow
     for i in 0..<count {
         result[i] = Float(resultBufferPointer!.pointee)// need to get more than just this one item
         resultBufferPointer = resultBufferPointer?.advanced(by: 1)
     }
-    // print(type(of: resultBufferPointer))
-    let getGPURandomElapsed = CFAbsoluteTimeGetCurrent() - getGPURandomStart
-    print("time elapsed: \(String(format: "%.05f", getGPURandomElapsed)) seconds")
-    return result
     
+     */
+    
+    //result
+    
+    
+    /////////////////
+    print("printCount " + String(printCount) + " \(String(format: "%.05f", CFAbsoluteTimeGetCurrent()))")
+    printCount += 1
+    //////////////////
+    
+    // print(type(of: resultBufferPointer))
+    
+    return result
+     
 }
 

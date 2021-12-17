@@ -8,46 +8,65 @@
 import Foundation
 import MetalKit
 
-/* start main */
-//let totalStart = CFAbsoluteTimeGetCurrent()
+/*o*o*o*o*o*o*o*o*o*o*o*o*o*o*o*o*o*o*o*o*o*o*o*o*o*o*o*o*o*o*o**/
+/*o*o*o*o*o*o*o*o*o*o*o*o*o Start main o*o*o*o*o*o*o*o*o*o*o*o*o*/
+/*o*o*o*o*o*o*o*o*o*o*o*o*o*o*o*o*o*o*o*o*o*o*o*o*o*o*o*o*o*o*o**/
 
-let count: Int = 100000000
+// Setup
+// -_-_-
+// Set number of elements to add
+let count: Int = 10000000
+// Set device to default
 let device = MTLCreateSystemDefaultDevice()
+// Space out the Metal messages
 print()
 
+
 // Generate on CPU and add on GPU
+// -_-_-_-_-_-_-_-_-_-_-_-_-_-_-_
+
+// Set start time for total CPU computation
 let startCPUTime = CFAbsoluteTimeGetCurrent()
+do {
+    // Generate the first Array and time it
+    let CPUGenerationStartTime1 = CFAbsoluteTimeGetCurrent()
+    let CPUGeneratedFloatArray1 = generateArrayOfRandomFloatsOnCPU()
+    let CPUGenerationElapsedTime1 = CFAbsoluteTimeGetCurrent() - CPUGenerationStartTime1
+    print("time elapsed: \(String(format: "%.05f", CPUGenerationElapsedTime1)) seconds")
 
-let getCPURandomStart1 = CFAbsoluteTimeGetCurrent()
-var array3 = getRandomArray()
-let getCPURandomElapsed1 = CFAbsoluteTimeGetCurrent() - getCPURandomStart1
-print("time elapsed: \(String(format: "%.05f", getCPURandomElapsed1)) seconds")
+    // Generate the second Array and time it
+    let CPUGenerationStartTime2 = CFAbsoluteTimeGetCurrent()
+    let CPUGeneratedFloatArray2 = generateArrayOfRandomFloatsOnCPU()
+    let CPUGenerationElapsedTime2 = CFAbsoluteTimeGetCurrent() - CPUGenerationStartTime2
+    print("time elapsed: \(String(format: "%.05f", CPUGenerationElapsedTime2)) seconds")
 
-let getCPURandomStart2 = CFAbsoluteTimeGetCurrent()
-var array4 = getRandomArray()
-let getCPURandomElapsed2 = CFAbsoluteTimeGetCurrent() - getCPURandomStart2
-print("time elapsed: \(String(format: "%.05f", getCPURandomElapsed2)) seconds")
-
-computeWay(arr1 : array3, arr2 : array4)
+    // Add the Arrays and calculate total time elapsed
+    addTwoArraysOnGPU(arr1 : CPUGeneratedFloatArray1, arr2 : CPUGeneratedFloatArray2)
+    
+}
 let totalCPUElapsed = CFAbsoluteTimeGetCurrent() - startCPUTime
 print("total time elapsed \(String(format: "%.05f", totalCPUElapsed)) seconds")
 print()
 
-
 // Generate on GPU and add on GPU
+// -_-_-_-_-_-_-_-_-_-_-_-_-_-_-_
+
+// Set start time for total GPU computation
 let startGPUTime = CFAbsoluteTimeGetCurrent()
+do {
+    // Generate the first Array and time it
+    let getGPURandomStart1 = CFAbsoluteTimeGetCurrent()
+    let array1 = getRandomArrayFromGPU()
+    let getGPURandomElapsed1 = CFAbsoluteTimeGetCurrent() - getGPURandomStart1
+    print("time elapsed: \(String(format: "%.05f", getGPURandomElapsed1)) seconds")
 
-let getGPURandomStart1 = CFAbsoluteTimeGetCurrent()
-var array1 = getRandomArrayFromGPU()
-let getGPURandomElapsed1 = CFAbsoluteTimeGetCurrent() - getGPURandomStart1
-print("time elapsed: \(String(format: "%.05f", getGPURandomElapsed1)) seconds")
+    let getGPURandomStart2 = CFAbsoluteTimeGetCurrent()
+    let array2 = getRandomArrayFromGPU()
+    let getGPURandomElapsed2 = CFAbsoluteTimeGetCurrent() - getGPURandomStart2
+    print("time elapsed: \(String(format: "%.05f", getGPURandomElapsed2)) seconds")
 
-let getGPURandomStart2 = CFAbsoluteTimeGetCurrent()
-var array2 = getRandomArrayFromGPU()
-let getGPURandomElapsed2 = CFAbsoluteTimeGetCurrent() - getGPURandomStart2
-print("time elapsed: \(String(format: "%.05f", getGPURandomElapsed2)) seconds")
-
-computeWay(arr1: array1, arr2: array2)
+    addTwoArraysOnGPU(arr1: array1, arr2: array2)
+}
 let totalGPUElapsed = CFAbsoluteTimeGetCurrent() - startGPUTime
 print("total time elapsed \(String(format: "%.05f", totalGPUElapsed)) seconds")
 print()
@@ -58,17 +77,14 @@ if totalCPUElapsed > totalGPUElapsed {
 if totalCPUElapsed < totalGPUElapsed {
     print("total time is \(String(format: "%.05f", totalGPUElapsed/totalCPUElapsed)) times less when \nrandom numbers are generated on the CPU")
 }
+
+// Prints a blank line to space out the exit code
 print()
-// compute sums
-//basicForLoopWay(arr1 : array3, arr2 : array4)
+/*o*o*o*o*o*o*o*o*o*o*o*o*o*o*o*o*o*o*o*o*o*o*o*o*o*o*o*o*o*o*o**/
+/*o*o*o*o*o*o*o*o*o*o*o*o*o* End main *o*o*o*o*o*o*o*o*o*o*o*o*o*/
+/*o*o*o*o*o*o*o*o*o*o*o*o*o*o*o*o*o*o*o*o*o*o*o*o*o*o*o*o*o*o*o**/
 
-
-/* end main */
-
-func computeWay(arr1 : [Float], arr2 : [Float]) {
-    
-    
-    
+func addTwoArraysOnGPU(arr1 : [Float], arr2 : [Float]) {
     let commandQueue = device?.makeCommandQueue()
     let GPUFunctionLibrary = device?.makeDefaultLibrary()
     let additionGPUFunction = GPUFunctionLibrary?.makeFunction(name: "add_arrays")
@@ -81,7 +97,7 @@ func computeWay(arr1 : [Float], arr2 : [Float]) {
     }
     
     print()
-    print("compute way")
+    
      // want to time the different parts of this i guess
     
     // make buffers
@@ -106,7 +122,20 @@ func computeWay(arr1 : [Float], arr2 : [Float]) {
     let threadsPerThreadGroup = MTLSize(width: maxThreadsPerGroup, height: 1, depth: 1)
     
     commandEncoder?.dispatchThreads(threadsPerGrid, threadsPerThreadgroup: threadsPerThreadGroup)
+     
     
+    
+    /*
+    // Found this code, might work on it more later
+    let threadgroupSizeMultiplier = 4
+    let threadsPerGroup = MTLSize(width: 256, height: 1, depth: 1)
+    let numThreadgroups = MTLSize(width: (count / (256 * threadgroupSizeMultiplier)), height: 1, depth:1)
+
+    print("Block: \(threadsPerGroup.width) x \(threadsPerGroup.height)\n" +
+          "Grid: \(numThreadgroups.width) x \(numThreadgroups.height) x \(numThreadgroups.depth)")
+
+    commandEncoder?.dispatchThreads(numThreadgroups, threadsPerThreadgroup: threadsPerGroup)
+    */
     commandEncoder?.endEncoding()
     
     commandBuf?.commit()
@@ -116,6 +145,7 @@ func computeWay(arr1 : [Float], arr2 : [Float]) {
     
     var resultBufferPointer = resultBuf?.contents().bindMemory(to: Float.self, capacity: MemoryLayout<Float>.size * count)
     
+    print("first 3 computations")
     for i in 0..<3 {
         print("\(arr1[i]) + \(arr2[i]) = \(Float(resultBufferPointer!.pointee) as Any)")
         resultBufferPointer = resultBufferPointer?.advanced(by: 1)
@@ -146,27 +176,20 @@ func basicForLoopWay(arr1 : [Float], arr2 : [Float]) {
 
 // TODO: parallelize this
 // done
-func getRandomArray()->[Float] {
+func generateArrayOfRandomFloatsOnCPU()->[Float] {
     print("using cpu for random")
     let seed2 = Int(arc4random())
     var result = [Float].init(repeating: 0.0, count: count)
     for i in 0..<count {
-        //result[i] = Float(arc4random_uniform(1000000000))/100000000
         result[i] = (Float((seed2 + i) / (i+1))).truncatingRemainder(dividingBy: 100);
-        //result[i] = Float(10)
+    
     }
     
     return result
 }
 
 func getRandomArrayFromGPU()->[Float] {
-
-
     print("using gpu for random")
-    
-    //var x = UnsafeMutableRawPointer(&result)
-    
-    //let device = MTLCreateSystemDefaultDevice()
     
     var result  = [Float].init(repeating: 0.0, count: count)
     let length = count * MemoryLayout<Float>.stride
@@ -180,42 +203,8 @@ func getRandomArrayFromGPU()->[Float] {
                      deallocator: { (pointer: UnsafeMutableRawPointer, _: Int) in
                         free(pointer)
     })
-    
-    
-    //let capture_manager = MTLCaptureManager.shared()
-    //let capture_desc = MTLCaptureDescriptor()
-    //capture_desc.captureObject = device
-    //do {
-    //    try capture_manager.startCapture(with: capture_desc)
-    //} catch {
-    //    print(error)
-    //}
-    //let argument_desc = MTLArgumentDescriptor()
-    //argument_desc.dataType = MTLDataType.pointer
-    //argument_desc.index = 0
-    //argument_desc.arrayLength = 1024
-    //let argument_encoder = device?.makeArgumentEncoder(arguments: [argument_desc])!
-   
-    //let argument_buffer = device?.makeBuffer(length: argument_encoder!.encodedLength, options: MTLResourceOptions())
-    //argument_encoder!.setArgumentBuffer(argument_buffer, offset: 0)
-        /*
-    var random2 = Int(arc4random())
-    let rp2 = UnsafeRawPointer.init(&random2)
-    let buffer = device.makeBuffer(bytes: ptr, length: 4, options: MTLResourceOptions.storageModeShared)!
-        argument_encoder.setBuffer(buffer, offset: 0, index: 0)
-        
-        let source = try String(contentsOf: URL.init(fileURLWithPath: "/path/to/kernel.metal"))
-        let library = try device.makeLibrary(source: source, options: MTLCompileOptions())*/
 
     sharedMetalBuffer?.contents().bindMemory(to: [Float].self, capacity: length)
-
-    //let sharedMetalBuffer = device?.makeBuffer(bytes: &result, length: count * MemoryLayout<Float>.stride, options: .storageModeShared)
-    //sharedMetalBuffer?.contents().initializeMemory(as: Float.self, from: result, count: count)
-    
-    //let sharedMetalBuffer = device?.makeBuffer(length: count * MemoryLayout<Float>.stride, options: .storageModeShared)
-    //let p = sharedMetalBuffer?.contents().bindMemory(to: [Float].self, capacity: count)
-    //p!.initialize(to: [Float].init(repeating: 0.0, count: count))
-    //sharedMetalBuffer?.contents().initializeMemory(as: [Float].self, from: &sharedMetalBuffer, count: count)
     
     let commandQueue = device?.makeCommandQueue()
     let GPUFunctionLibrary = device?.makeDefaultLibrary()
@@ -228,8 +217,6 @@ func getRandomArrayFromGPU()->[Float] {
         print(error)
     }
     
-    //let resBuf = device?.makeBuffer(bytes: result, length: MemoryLayout<Float>.size * count, options: .storageModeShared)
-    //let resBuf = device?.makeBuffer(bytesNoCopy: x, length: MemoryLayout<Float>.size * count, options: .storageModeShared)
     let commandBuf = commandQueue?.makeCommandBuffer()
     
     let commandEncoder = commandBuf?.makeComputeCommandEncoder()
@@ -242,6 +229,8 @@ func getRandomArrayFromGPU()->[Float] {
     let rp: UnsafeMutablePointer<Int> = .init(&random)
     commandEncoder?.setBuffer(device?.makeBuffer(bytes: rp, length: 4, options: .storageModeShared),offset: 0,index: 1)
     
+    
+    
     let threadsPerGrid = MTLSize(width: count, height: 1, depth: 1)
     let maxThreadsPerGroup = generateRandomComputePipelineState.maxTotalThreadsPerThreadgroup // this is intersting
     let threadsPerThreadGroup = MTLSize(width: maxThreadsPerGroup, height: 1, depth: 1)
@@ -249,59 +238,11 @@ func getRandomArrayFromGPU()->[Float] {
     commandEncoder?.dispatchThreads(threadsPerGrid, threadsPerThreadgroup: threadsPerThreadGroup)
     
     commandEncoder?.endEncoding()
-    
-
-    
-    
+ 
     commandBuf?.commit()
     commandBuf?.waitUntilCompleted()
     
-   // var resultBufferPointer = sharedMetalBuffer?.contents().bindMemory(to: Float.self, capacity: MemoryLayout<Float>.size * count)
-    
-    //print(Float(resultBufferPointer!.pointee))
-    
-   // print(sharedMetalBuffer?.length)
-   
-   // print(resultBufferPointer)
-   // print(resultBufferPointer?.advanced(by: 1))
-    //print("        " , result.count * MemoryLayout<Float>.stride)
-    
-    //var result  = [Float].init(repeating: 0.0, count: count)
-    
-    //resultBufferPointer .storeBytes(of: result, toByteOffset: 0, as: Float)
-    //print(result[0])
-    //result = resultBufferPointer?.move()
-    
-    //let value = result.withUnsafeBytes {$0.baseAddress?.assumingMemoryBound(to: Float.self)}
-    //let x = UnsafeBufferPointer(start: sharedMetalBuffer?.contents(), count: 100)
-    
-    //print(x[0])
-    //print(result[0])
-    //var bigResult = Array<Float>(unsafeUninitializedCapacity: allocationSize, initializingWith: (result, 10) throws -> Void)
-    
-    //var bigResult = [Float].init(repeating: 0.0, count: sharedMetalBuffer?.length ?? 0)
     memmove(&result[0], sharedMetalBuffer?.contents(), length)
-            //(sharedMetalBuffer?.length)!)
-    //memmove(&result[0], &memory!, allocationSize)
-    //print(result)
-    
-
-    
-    /*
-    //this part is incredibly slow
-    for i in 0..<count {
-        result[i] = Float(resultBufferPointer!.pointee)// need to get more than just this one item
-        resultBufferPointer = resultBufferPointer?.advanced(by: 1)
-    }
-    
-     */
-    
-    //result
-    
-    
-
-    
-    // print(type(of: resultBufferPointer))
     
     return result
      

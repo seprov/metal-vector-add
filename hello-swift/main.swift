@@ -113,11 +113,14 @@ func basicForLoopWay(arr1 : [Float], arr2 : [Float]) {
 }
 
 // TODO: parallelize this
+// done
 func getRandomArray()->[Float] {
     print("using cpu for random")
     var result = [Float].init(repeating: 0.0, count: count)
     for i in 0..<count {
-        result[i] = Float(arc4random_uniform(10))
+        result[i] = Float(arc4random_uniform(1000000000))/100000000
+        
+        
     }
     return result
 }
@@ -167,6 +170,11 @@ func getRandomArrayFromGPU()->[Float] {
     commandEncoder?.setComputePipelineState(generateRandomComputePipelineState)
     //commandEncoder?.setBuffer(resBuf, offset: 0, index: 0)
     commandEncoder?.setBuffer(sharedMetalBuffer, offset: 0, index: 0)
+    
+    // we still need one random number
+    var random = Int(arc4random())
+    var rp: UnsafeMutablePointer<Int> = .init(&random)
+    commandEncoder?.setBuffer(device?.makeBuffer(bytes: rp, length: 4, options: .storageModeShared),offset: 0,index: 1)
     
     let threadsPerGrid = MTLSize(width: count, height: 1, depth: 1)
     let maxThreadsPerGroup = generateRandomComputePipelineState.maxTotalThreadsPerThreadgroup // this is intersting

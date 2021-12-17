@@ -17,9 +17,10 @@ float rand(int x, int y, int z)
 }
 
 kernel void generate_random_array(device float * arr1 [[buffer(0)]],
+                                  device int * seed2 [[buffer(1)]],
                                   uint index [[ thread_position_in_grid ]]) {
 
-    arr1[index] = 10.0 * rand(index+1,index+2,index+3); // some seeds!
+    arr1[index] = 10.0 * rand(*seed2,*seed2 / 2,index+3); // some seeds!
 
 }
 

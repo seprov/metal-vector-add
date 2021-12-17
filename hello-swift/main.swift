@@ -18,13 +18,15 @@ let count: Int = 3000000
 var array3 = getRandomArray()
 var array4 = getRandomArray()
 
+computeWay(arr1 : array3, arr2 : array4)
+
 // make random arrays
 var array1 = getRandomArrayFromGPU()
 var array2 = getRandomArrayFromGPU()
 
 // compute sums
-// basicForLoopWay(arr1 : array1, arr2 : array2)
-computeWay(arr1 : array3, arr2 : array4)
+//basicForLoopWay(arr1 : array3, arr2 : array4)
+
 computeWay(arr1 : array1, arr2 : array2)
 /* end main */
 
@@ -112,6 +114,7 @@ func basicForLoopWay(arr1 : [Float], arr2 : [Float]) {
 
 // TODO: parallelize this
 func getRandomArray()->[Float] {
+    print("using cpu for random")
     var result = [Float].init(repeating: 0.0, count: count)
     for i in 0..<count {
         result[i] = Float(arc4random_uniform(10))
@@ -120,9 +123,31 @@ func getRandomArray()->[Float] {
 }
 
 func getRandomArrayFromGPU()->[Float] {
-    var result = [Float].init(repeating: 0.0, count: count)
+    print("using gpu for random")
+    //var x = UnsafeMutableRawPointer(&result)
     
     let device = MTLCreateSystemDefaultDevice()
+    
+    let length = count * MemoryLayout<Float>.stride
+    var memory: UnsafeMutableRawPointer? = nil
+    let alignment = 0x1000
+    let allocationSize = (length + alignment - 1) & (~(alignment - 1))
+    posix_memalign(&memory, alignment, allocationSize)
+    let sharedMetalBuffer = device?.makeBuffer(bytesNoCopy: memory!,
+                     length: allocationSize,
+                     options: [],
+                     deallocator: { (pointer: UnsafeMutableRawPointer, _: Int) in
+                        free(pointer)
+    })
+    sharedMetalBuffer?.contents().bindMemory(to: [Float].self, capacity: length)
+    //let sharedMetalBuffer = device?.makeBuffer(bytes: &result, length: count * MemoryLayout<Float>.stride, options: .storageModeShared)
+    //sharedMetalBuffer?.contents().initializeMemory(as: Float.self, from: result, count: count)
+    
+    //let sharedMetalBuffer = device?.makeBuffer(length: count * MemoryLayout<Float>.stride, options: .storageModeShared)
+    //let p = sharedMetalBuffer?.contents().bindMemory(to: [Float].self, capacity: count)
+    //p!.initialize(to: [Float].init(repeating: 0.0, count: count))
+    //sharedMetalBuffer?.contents().initializeMemory(as: [Float].self, from: &sharedMetalBuffer, count: count)
+    
     let commandQueue = device?.makeCommandQueue()
     let GPUFunctionLibrary = device?.makeDefaultLibrary()
     let generateRandomArrayFunction = GPUFunctionLibrary?.makeFunction(name: "generate_random_array")
@@ -134,13 +159,14 @@ func getRandomArrayFromGPU()->[Float] {
         print(error)
     }
     
-    let resBuf = device?.makeBuffer(bytes: result, length: MemoryLayout<Float>.size * count, options: .storageModeShared)
-    
+    //let resBuf = device?.makeBuffer(bytes: result, length: MemoryLayout<Float>.size * count, options: .storageModeShared)
+    //let resBuf = device?.makeBuffer(bytesNoCopy: x, length: MemoryLayout<Float>.size * count, options: .storageModeShared)
     let commandBuf = commandQueue?.makeCommandBuffer()
     
     let commandEncoder = commandBuf?.makeComputeCommandEncoder()
     commandEncoder?.setComputePipelineState(generateRandomComputePipelineState)
-    commandEncoder?.setBuffer(resBuf, offset: 0, index: 0)
+    //commandEncoder?.setBuffer(resBuf, offset: 0, index: 0)
+    commandEncoder?.setBuffer(sharedMetalBuffer, offset: 0, index: 0)
     
     let threadsPerGrid = MTLSize(width: count, height: 1, depth: 1)
     let maxThreadsPerGroup = generateRandomComputePipelineState.maxTotalThreadsPerThreadgroup // this is intersting
@@ -153,9 +179,15 @@ func getRandomArrayFromGPU()->[Float] {
     commandBuf?.commit()
     commandBuf?.waitUntilCompleted()
     
-    var resultBufferPointer = resBuf?.contents().bindMemory(to: Float.self, capacity: MemoryLayout<Float>.size * count)
-    result = [Float(resultBufferPointer!.pointee)] // need to get more than just this one item
+    var resultBufferPointer = sharedMetalBuffer?.contents().bindMemory(to: Float.self, capacity: MemoryLayout<Float>.size * count)
     
+    var result  = [Float].init(repeating: 0.0, count: count)
+    for i in 0..<count {
+        result[i] = Float(resultBufferPointer!.pointee)// need to get more than just this one item
+        resultBufferPointer = resultBufferPointer?.advanced(by: 1)
+    }
+    // print(type(of: resultBufferPointer))
     return result
+    
 }
 

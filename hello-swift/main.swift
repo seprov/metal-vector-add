@@ -9,29 +9,44 @@ import Foundation
 import MetalKit
 
 /* start main */
-let totalStart = CFAbsoluteTimeGetCurrent()
+//let totalStart = CFAbsoluteTimeGetCurrent()
 
-print("Hello, World!")
+let count: Int = 10000000
 
-let count: Int = 3000000
-
+// Generate on CPU and add on GPU
+let startCPUTime = CFAbsoluteTimeGetCurrent()
 var array3 = getRandomArray()
 var array4 = getRandomArray()
-
 computeWay(arr1 : array3, arr2 : array4)
+let totalCPUElapsed = CFAbsoluteTimeGetCurrent() - startCPUTime
+print("total time elapsed \(String(format: "%.05f", totalCPUElapsed)) seconds")
+print()
 
-// make random arrays
+
+// Generate on GPU and add on GPU
+let startGPUTime = CFAbsoluteTimeGetCurrent()
 var array1 = getRandomArrayFromGPU()
 var array2 = getRandomArrayFromGPU()
+computeWay(arr1: array1, arr2: array2)
+let totalGPUElapsed = CFAbsoluteTimeGetCurrent() - startGPUTime
+print("total time elapsed \(String(format: "%.05f", totalGPUElapsed)) seconds")
+print()
 
+if totalCPUElapsed > totalGPUElapsed {
+    print("total time is \(String(format: "%.05f", totalCPUElapsed/totalGPUElapsed)) times less when \nrandom numbers are generated on the GPU")
+}
+if totalCPUElapsed < totalGPUElapsed {
+    print("total time is \(String(format: "%.05f", totalGPUElapsed/totalCPUElapsed)) times less when \nrandom numbers are generated on the CPU")
+}
+print()
 // compute sums
 //basicForLoopWay(arr1 : array3, arr2 : array4)
 
-computeWay(arr1 : array1, arr2 : array2)
+
 /* end main */
 
 func computeWay(arr1 : [Float], arr2 : [Float]) {
-    let startTime = CFAbsoluteTimeGetCurrent()
+    
     let device = MTLCreateSystemDefaultDevice()
     let commandQueue = device?.makeCommandQueue()
     let GPUFunctionLibrary = device?.makeDefaultLibrary()
@@ -46,7 +61,7 @@ func computeWay(arr1 : [Float], arr2 : [Float]) {
     
     print()
     print("compute way")
-    let startTime2 = CFAbsoluteTimeGetCurrent() // want to time the different parts of this i guess
+     // want to time the different parts of this i guess
     
     // make buffers
     // doing it straight out of the tutorial, but in the future
@@ -74,9 +89,9 @@ func computeWay(arr1 : [Float], arr2 : [Float]) {
     commandEncoder?.endEncoding()
     
     commandBuf?.commit()
-    let startTime3 = CFAbsoluteTimeGetCurrent() //
+    let computeStart = CFAbsoluteTimeGetCurrent() //
     commandBuf?.waitUntilCompleted()
-    let endTime1 = CFAbsoluteTimeGetCurrent() //
+    let computeEnd = CFAbsoluteTimeGetCurrent() //
     
     var resultBufferPointer = resultBuf?.contents().bindMemory(to: Float.self, capacity: MemoryLayout<Float>.size * count)
     
@@ -85,13 +100,9 @@ func computeWay(arr1 : [Float], arr2 : [Float]) {
         resultBufferPointer = resultBufferPointer?.advanced(by: 1)
     }
     
-    let timeElapsed = CFAbsoluteTimeGetCurrent() - startTime
-    print("total time elapsed \(String(format: "%.05f", timeElapsed)) seconds")
-    //print()
+    let computeElapsed = computeEnd - computeStart
+    print("compute time elapsed \(String(format: "%.05f", computeElapsed)) seconds")
     
-    let timeElapsed2 = endTime1 - startTime3
-    print("compute time elapsed \(String(format: "%.05f", timeElapsed2)) seconds")
-    print()
 }
 
 func basicForLoopWay(arr1 : [Float], arr2 : [Float]) {
@@ -116,17 +127,21 @@ func basicForLoopWay(arr1 : [Float], arr2 : [Float]) {
 // done
 func getRandomArray()->[Float] {
     print("using cpu for random")
+    let getCPURandomStart = CFAbsoluteTimeGetCurrent()
     var result = [Float].init(repeating: 0.0, count: count)
     for i in 0..<count {
         result[i] = Float(arc4random_uniform(1000000000))/100000000
         
         
     }
+    let getCPURandomElapsed = CFAbsoluteTimeGetCurrent() - getCPURandomStart
+    print("time elapsed: \(String(format: "%.05f", getCPURandomElapsed)) seconds")
     return result
 }
 
 func getRandomArrayFromGPU()->[Float] {
     print("using gpu for random")
+    let getGPURandomStart = CFAbsoluteTimeGetCurrent()
     //var x = UnsafeMutableRawPointer(&result)
     
     let device = MTLCreateSystemDefaultDevice()
@@ -195,6 +210,8 @@ func getRandomArrayFromGPU()->[Float] {
         resultBufferPointer = resultBufferPointer?.advanced(by: 1)
     }
     // print(type(of: resultBufferPointer))
+    let getGPURandomElapsed = CFAbsoluteTimeGetCurrent() - getGPURandomStart
+    print("time elapsed: \(String(format: "%.05f", getGPURandomElapsed)) seconds")
     return result
     
 }

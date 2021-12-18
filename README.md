@@ -58,6 +58,7 @@
 	I guess CPU-CPU computation would have taken close to an hour for the next largest array.
 	
 	GPU-GPU can compute up to 1000000000 element arrays (10.42998 seconds). 
-	The program crashes on addition of the next largest array with the following error:
+	The program crashes on addition of arrays of the next largest size with the following error:
 
-	Execution of the command buffer was aborted due to an error during execution. Insufficient Memory (00000008:kIOGPUCommandBufferCallbackErrorOutOfMemory)
+	Execution of the command buffer was aborted due to an error during execution. 
+	Insufficient Memory (00000008:kIOGPUCommandBufferCallbackErrorOutOfMemory)

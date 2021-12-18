@@ -15,76 +15,107 @@ import MetalKit
 // Setup
 // -_-_-
 // Set number of elements to add
-let count: Int = 10000000
+var count: Int = 1000
 // Set device to default
 let device = MTLCreateSystemDefaultDevice()
 // Space out the Metal messages
 print()
 
+for i in 0...6 {
+    count = Int(1000*(pow(Double(10),Double(i))))
+    // Generate on CPU and add on CPU
+    // -_-_-_-_-_-_-_-_-_-_-_-_-_-_-_
+    let startAllCPUTime = CFAbsoluteTimeGetCurrent()
+    do {
+        let CPUGenerationStartTime1 = CFAbsoluteTimeGetCurrent()
+        let CPUGeneratedFloatArray1 = getRandomArrayFromCPU()
+        let CPUGenerationElapsedTime1 = CFAbsoluteTimeGetCurrent() - CPUGenerationStartTime1
+        //print("time elapsed: \(String(format: "%.05f", CPUGenerationElapsedTime1)) seconds")
 
-// Generate on CPU and add on GPU
-// -_-_-_-_-_-_-_-_-_-_-_-_-_-_-_
+        // Generate the second Array and time it
+        let CPUGenerationStartTime2 = CFAbsoluteTimeGetCurrent()
+        let CPUGeneratedFloatArray2 = getRandomArrayFromCPU()
+        let CPUGenerationElapsedTime2 = CFAbsoluteTimeGetCurrent() - CPUGenerationStartTime2
+        //print("time elapsed: \(String(format: "%.05f", CPUGenerationElapsedTime2)) seconds")
+        
+        addTwoArraysOnCPU(arr1 : CPUGeneratedFloatArray1, arr2 : CPUGeneratedFloatArray2, printExtraInfo: false)
 
-// Set start time for total CPU computation
-let startCPUTime = CFAbsoluteTimeGetCurrent()
-do {
-    // Generate the first Array and time it
-    let CPUGenerationStartTime1 = CFAbsoluteTimeGetCurrent()
-    let CPUGeneratedFloatArray1 = generateArrayOfRandomFloatsOnCPU()
-    let CPUGenerationElapsedTime1 = CFAbsoluteTimeGetCurrent() - CPUGenerationStartTime1
-    print("time elapsed: \(String(format: "%.05f", CPUGenerationElapsedTime1)) seconds")
+    }
+    let totalAllCPUElapsed = CFAbsoluteTimeGetCurrent() - startAllCPUTime
+    //print("total time elapsed \(String(format: "%.05f", totalAllCPUElapsed)) seconds")
+    //print()
 
-    // Generate the second Array and time it
-    let CPUGenerationStartTime2 = CFAbsoluteTimeGetCurrent()
-    let CPUGeneratedFloatArray2 = generateArrayOfRandomFloatsOnCPU()
-    let CPUGenerationElapsedTime2 = CFAbsoluteTimeGetCurrent() - CPUGenerationStartTime2
-    print("time elapsed: \(String(format: "%.05f", CPUGenerationElapsedTime2)) seconds")
+    // Generate on CPU and add on GPU
+    // -_-_-_-_-_-_-_-_-_-_-_-_-_-_-_
 
-    // Add the Arrays and calculate total time elapsed
-    addTwoArraysOnGPU(arr1 : CPUGeneratedFloatArray1, arr2 : CPUGeneratedFloatArray2)
-    
+    // Set start time for total CPU computation
+    let startCPUTime = CFAbsoluteTimeGetCurrent()
+    do {
+        // Generate the first Array and time it
+        let CPUGenerationStartTime1 = CFAbsoluteTimeGetCurrent()
+        let CPUGeneratedFloatArray1 = getRandomArrayFromCPU()
+        let CPUGenerationElapsedTime1 = CFAbsoluteTimeGetCurrent() - CPUGenerationStartTime1
+        //print("time elapsed: \(String(format: "%.05f", CPUGenerationElapsedTime1)) seconds")
+
+        // Generate the second Array and time it
+        let CPUGenerationStartTime2 = CFAbsoluteTimeGetCurrent()
+        let CPUGeneratedFloatArray2 = getRandomArrayFromCPU()
+        let CPUGenerationElapsedTime2 = CFAbsoluteTimeGetCurrent() - CPUGenerationStartTime2
+        //print("time elapsed: \(String(format: "%.05f", CPUGenerationElapsedTime2)) seconds")
+
+        // Add the Arrays and calculate total time elapsed
+        addTwoArraysOnGPU(arr1 : CPUGeneratedFloatArray1, arr2 : CPUGeneratedFloatArray2, printExtraInfo: false)
+        
+    }
+    let totalCPUElapsed = CFAbsoluteTimeGetCurrent() - startCPUTime
+    //print("total time elapsed \(String(format: "%.05f", totalCPUElapsed)) seconds")
+    //print()
+
+    // Generate on GPU and add on GPU
+    // -_-_-_-_-_-_-_-_-_-_-_-_-_-_-_
+
+    // Set start time for total GPU computation
+    let startGPUTime = CFAbsoluteTimeGetCurrent()
+    do {
+        // Generate the first Array and time it
+        let getGPURandomStart1 = CFAbsoluteTimeGetCurrent()
+        let array1 = getRandomArrayFromGPU()
+        let getGPURandomElapsed1 = CFAbsoluteTimeGetCurrent() - getGPURandomStart1
+        //print("time elapsed: \(String(format: "%.05f", getGPURandomElapsed1)) seconds")
+
+        let getGPURandomStart2 = CFAbsoluteTimeGetCurrent()
+        let array2 = getRandomArrayFromGPU()
+        let getGPURandomElapsed2 = CFAbsoluteTimeGetCurrent() - getGPURandomStart2
+        //print("time elapsed: \(String(format: "%.05f", getGPURandomElapsed2)) seconds")
+
+        addTwoArraysOnGPU(arr1: array1, arr2: array2, printExtraInfo: false)
+    }
+    let totalGPUElapsed = CFAbsoluteTimeGetCurrent() - startGPUTime
+    //print("total time elapsed \(String(format: "%.05f", totalGPUElapsed)) seconds")
+    //print()
+
+    print("with n = ", count, "element arrays")
+    print("generated on | computed on | total time |  speedup  ")
+    print("cpu           cpu           \(String(format: "%.05f", totalAllCPUElapsed))     ", 1.00000)
+    print("cpu           gpu           \(String(format: "%.05f", totalCPUElapsed))     ", "\(String(format: "%.03f", totalAllCPUElapsed/totalCPUElapsed))")
+    print("gpu           gpu           \(String(format: "%.05f", totalGPUElapsed))     ", "\(String(format: "%.03f", totalAllCPUElapsed/totalGPUElapsed))")
+    print()
+    /*
+    if totalCPUElapsed > totalGPUElapsed {
+        print("total time is \(String(format: "%.05f", totalCPUElapsed/totalGPUElapsed)) times less when \nrandom numbers are generated on the GPU")
+    }
+    if totalCPUElapsed < totalGPUElapsed {
+        print("total time is \(String(format: "%.05f", totalGPUElapsed/totalCPUElapsed)) times less when \nrandom numbers are generated on the CPU")
+    }*/
 }
-let totalCPUElapsed = CFAbsoluteTimeGetCurrent() - startCPUTime
-print("total time elapsed \(String(format: "%.05f", totalCPUElapsed)) seconds")
-print()
 
-// Generate on GPU and add on GPU
-// -_-_-_-_-_-_-_-_-_-_-_-_-_-_-_
 
-// Set start time for total GPU computation
-let startGPUTime = CFAbsoluteTimeGetCurrent()
-do {
-    // Generate the first Array and time it
-    let getGPURandomStart1 = CFAbsoluteTimeGetCurrent()
-    let array1 = getRandomArrayFromGPU()
-    let getGPURandomElapsed1 = CFAbsoluteTimeGetCurrent() - getGPURandomStart1
-    print("time elapsed: \(String(format: "%.05f", getGPURandomElapsed1)) seconds")
-
-    let getGPURandomStart2 = CFAbsoluteTimeGetCurrent()
-    let array2 = getRandomArrayFromGPU()
-    let getGPURandomElapsed2 = CFAbsoluteTimeGetCurrent() - getGPURandomStart2
-    print("time elapsed: \(String(format: "%.05f", getGPURandomElapsed2)) seconds")
-
-    addTwoArraysOnGPU(arr1: array1, arr2: array2)
-}
-let totalGPUElapsed = CFAbsoluteTimeGetCurrent() - startGPUTime
-print("total time elapsed \(String(format: "%.05f", totalGPUElapsed)) seconds")
-print()
-
-if totalCPUElapsed > totalGPUElapsed {
-    print("total time is \(String(format: "%.05f", totalCPUElapsed/totalGPUElapsed)) times less when \nrandom numbers are generated on the GPU")
-}
-if totalCPUElapsed < totalGPUElapsed {
-    print("total time is \(String(format: "%.05f", totalGPUElapsed/totalCPUElapsed)) times less when \nrandom numbers are generated on the CPU")
-}
-
-// Prints a blank line to space out the exit code
-print()
 /*o*o*o*o*o*o*o*o*o*o*o*o*o*o*o*o*o*o*o*o*o*o*o*o*o*o*o*o*o*o*o**/
 /*o*o*o*o*o*o*o*o*o*o*o*o*o* End main *o*o*o*o*o*o*o*o*o*o*o*o*o*/
 /*o*o*o*o*o*o*o*o*o*o*o*o*o*o*o*o*o*o*o*o*o*o*o*o*o*o*o*o*o*o*o**/
 
-func addTwoArraysOnGPU(arr1 : [Float], arr2 : [Float]) {
+func addTwoArraysOnGPU(arr1 : [Float], arr2 : [Float], printExtraInfo : Bool) {
+    //print("using gpu for computation")
     let commandQueue = device?.makeCommandQueue()
     let GPUFunctionLibrary = device?.makeDefaultLibrary()
     let additionGPUFunction = GPUFunctionLibrary?.makeFunction(name: "add_arrays")
@@ -96,9 +127,7 @@ func addTwoArraysOnGPU(arr1 : [Float], arr2 : [Float]) {
         print(error)
     }
     
-    print()
-    
-     // want to time the different parts of this i guess
+
     
     // make buffers
     // doing it straight out of the tutorial, but in the future
@@ -123,8 +152,6 @@ func addTwoArraysOnGPU(arr1 : [Float], arr2 : [Float]) {
     
     commandEncoder?.dispatchThreads(threadsPerGrid, threadsPerThreadgroup: threadsPerThreadGroup)
      
-    
-    
     /*
     // Found this code, might work on it more later
     let threadgroupSizeMultiplier = 4
@@ -136,48 +163,61 @@ func addTwoArraysOnGPU(arr1 : [Float], arr2 : [Float]) {
 
     commandEncoder?.dispatchThreads(numThreadgroups, threadsPerThreadgroup: threadsPerGroup)
     */
+    
     commandEncoder?.endEncoding()
     
+    let computeStart = CFAbsoluteTimeGetCurrent()
     commandBuf?.commit()
-    let computeStart = CFAbsoluteTimeGetCurrent() //
     commandBuf?.waitUntilCompleted()
     let computeEnd = CFAbsoluteTimeGetCurrent() //
     
     var resultBufferPointer = resultBuf?.contents().bindMemory(to: Float.self, capacity: MemoryLayout<Float>.size * count)
     
-    print("first 3 computations")
-    for i in 0..<3 {
-        print("\(arr1[i]) + \(arr2[i]) = \(Float(resultBufferPointer!.pointee) as Any)")
-        resultBufferPointer = resultBufferPointer?.advanced(by: 1)
+    if printExtraInfo {
+        print("first 3 computations")
+        for i in 0..<3 {
+            print("\(arr1[i]) + \(arr2[i]) = \(Float(resultBufferPointer!.pointee) as Any)")
+            resultBufferPointer = resultBufferPointer?.advanced(by: 1)
+        }
+        print(arr1.count)
+        print(arr2.count)
     }
     
     let computeElapsed = computeEnd - computeStart
-    print("compute time elapsed \(String(format: "%.05f", computeElapsed)) seconds")
+    //print("compute time elapsed \(String(format: "%.05f", computeElapsed)) seconds")
     
 }
 
-func basicForLoopWay(arr1 : [Float], arr2 : [Float]) {
-    print("basic for loop way")
+func addTwoArraysOnCPU(arr1 : [Float], arr2 : [Float], printExtraInfo: Bool) {
+    //print("using cpu for computation")
     
-    let startTime = CFAbsoluteTimeGetCurrent()
+    //let startTime = CFAbsoluteTimeGetCurrent()
     var result = [Float].init(repeating: 0.0, count: count)
     
+    let computeStart = CFAbsoluteTimeGetCurrent()
     for i in 0..<count {
         result[i] = arr1[i] + arr2[i]
     }
+    let computeEnd = CFAbsoluteTimeGetCurrent()
     
-    // could print the results i guess, who cares
+    if printExtraInfo {
+        print("first 3 computations")
+        for i in 0..<3 {
+            print("\(arr1[i]) + \(arr2[i]) = \(result[i])")
+        }
+    }
+    let computeElapsed = computeEnd - computeStart
+    // print("compute time elapsed \(String(format: "%.05f", computeElapsed)) seconds")
     
-    let timeElapsed = CFAbsoluteTimeGetCurrent() - startTime
-    print("time elapsed: \(String(format: "%.05f", timeElapsed)) seconds")
+    //let timeElapsed = CFAbsoluteTimeGetCurrent() - startTime
+    //print("time elapsed: \(String(format: "%.05f", timeElapsed)) seconds")
     
-    print() // guess this prints a new line
 }
 
 // TODO: parallelize this
 // done
-func generateArrayOfRandomFloatsOnCPU()->[Float] {
-    print("using cpu for random")
+func getRandomArrayFromCPU()->[Float] {
+    //print("using cpu for random")
     let seed2 = Int(arc4random())
     var result = [Float].init(repeating: 0.0, count: count)
     for i in 0..<count {
@@ -189,7 +229,7 @@ func generateArrayOfRandomFloatsOnCPU()->[Float] {
 }
 
 func getRandomArrayFromGPU()->[Float] {
-    print("using gpu for random")
+    //print("using gpu for random")
     
     var result  = [Float].init(repeating: 0.0, count: count)
     let length = count * MemoryLayout<Float>.stride

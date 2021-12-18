@@ -16,6 +16,7 @@
 	--
 	
 	Sample output:
+	(on an M1 Macbook Air)
 	
 	with n =  1000 element arrays
 	generated on | computed on | total time |  speedup  

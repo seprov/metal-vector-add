@@ -1,21 +1,21 @@
 # hello-swift
-	Some basic programming with Swift (and Metal of course)
+Some basic programming with Swift (and Metal of course)
 
-	Adds 2 arrays of random numbers on the GPU.
+Adds 2 arrays of random numbers on the GPU.
 
-	Random numbers are generated in 2 ways:
-	  CPU - An array of floats is created, random numbers are assigned serially by the CPU.
-	  GPU - A buffer is created and bound to an array of floats, then the GPU computes each random number in parallel.
+Random numbers are generated in 2 ways:
+on the CPU - An array of floats is created, random numbers are assigned serially by the CPU.
+on the GPU - A buffer is created and bound to an array of floats, then the GPU computes each random number in parallel.
 
-	Can output various things. I should implement command line arguments to specify which.
+Can output various things. I should implement command line arguments to specify which.
 
-	--
+--
 
-	Somewhat scalable
-	
-	--
-	
-	Sample output:
+Somewhat scalable
+
+--
+
+Sample output:
 	(on an M1 Macbook Air)
 	
 	with n =  1000 element arrays
@@ -54,12 +54,12 @@
 	cpu           gpu           426.35468      0.848
 	gpu           gpu           0.79917      452.207
 	
-	--
+--
 	
-	I guess CPU-CPU computation would have taken close to an hour for the next largest array.
-	
-	GPU-GPU can compute up to 1000000000 element arrays (10.42998 seconds). 
-	The program crashes on addition of arrays of the next largest size with the following error:
+I guess CPU-CPU computation would have taken close to an hour for the next largest array.
 
-	Execution of the command buffer was aborted due to an error during execution. 
-	Insufficient Memory (00000008:kIOGPUCommandBufferCallbackErrorOutOfMemory)
+GPU-GPU can compute up to 1000000000 element arrays (10.42998 seconds). 
+The program crashes on addition of arrays of the next largest size with the following error:
+
+<code>Execution of the command buffer was aborted due to an error during execution. 
+Insufficient Memory (00000008:kIOGPUCommandBufferCallbackErrorOutOfMemory)</code>

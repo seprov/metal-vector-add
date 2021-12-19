@@ -3,7 +3,7 @@
 
 	Adds 2 arrays of random numbers on the GPU.
 
-	Random numebers are generated in 2 ways:
+	Random numbers are generated in 2 ways:
 	  CPU - An array of floats is created, random numbers are assigned serially by the CPU.
 	  GPU - A buffer is created and bound to an array of floats, then the GPU computes each random number in parallel.
 

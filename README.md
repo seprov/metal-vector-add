@@ -1,4 +1,4 @@
-# hello-swift
+# metal-vector-add
 Some basic programming with Swift (and Metal of course)
 
 Adds 2 arrays of random numbers on the GPU.

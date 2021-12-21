@@ -2,6 +2,6 @@
 <Workspace
    version = "1.0">
    <FileRef
-      location = "self:">
+      location = "self:/Users/sebastian/Documents/git/hello-swift/metal-vector-add.xcodeproj">
    </FileRef>
 </Workspace>

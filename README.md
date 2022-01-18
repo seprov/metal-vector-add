@@ -1,23 +1,18 @@
 # metal-vector-add
+### Description:
 Some basic programming with Swift (and Metal of course)
 
 Adds 2 arrays of random numbers on the GPU.
 
 Random numbers are generated in 2 ways:
+* on the CPU - An array of floats is created, random numbers are assigned serially by the CPU.
+* on the GPU - A buffer is created and bound to an array of floats, then the GPU computes each random number in parallel.
 
-on the CPU - An array of floats is created, random numbers are assigned serially by the CPU.
+It can output various things. I should implement command line arguments to specify which.
 
-on the GPU - A buffer is created and bound to an array of floats, then the GPU computes each random number in parallel.
+It is somewhat scalable.
 
-Can output various things. I should implement command line arguments to specify which.
-
---
-
-Somewhat scalable
-
---
-
-Sample output:
+### Sample output:
 	(on an M1 Macbook Air)
 	
 	with n =  1000 element arrays
@@ -56,14 +51,16 @@ Sample output:
 	cpu           gpu           426.35468      0.848
 	gpu           gpu           0.79917      452.207
 	
---
+### Notes:
 	
 I guess CPU-CPU computation would have taken close to an hour for the next largest array.
 
-GPU-GPU can compute up to 1000000000 element arrays (10.42998 seconds). 
-The program crashes on addition of arrays of the next largest size (10000000000 elements) with the following error:
+GPU-GPU can compute up to 1,000,000,000 element arrays (10.42998 seconds). 
+The program crashes on addition of arrays of the next largest size (10,000,000,000 elements) with the following error:
 
-<code>Execution of the command buffer was aborted due to an error during execution. 
-Insufficient Memory (00000008:kIOGPUCommandBufferCallbackErrorOutOfMemory)</code>
+```
+Execution of the command buffer was aborted due to an error during execution. 
+Insufficient Memory (00000008:kIOGPUCommandBufferCallbackErrorOutOfMemory)
+```
 
-This is probably because arrays of 10 billion floats are around 40GB each, and my computer refuses to even swap 120GB.
+This is probably because arrays of 10 billion floats are around 40GB each, and my computer refuses to swap 120GB.

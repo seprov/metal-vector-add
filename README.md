@@ -12,8 +12,7 @@ It can output various things. I should implement command line arguments to speci
 
 It is somewhat scalable.
 
-### Sample output:
-	(on an M1 Macbook Air)
+### Sample output on an M1 Macbook Air:
 	
 	with n =  1000 element arrays
 	generated on | computed on | total time |  speedup  
